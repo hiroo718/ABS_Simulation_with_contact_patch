@@ -6,17 +6,15 @@
 ---
 
 ブラウザ上でABSまたはWSPシミュレーション結果をリアルタイム可視化するスタンドアロンツールです。インストール・サーバー不要。
-A self-contained, zero-dependency browser tool for real-time visualization of wheel slide protection (ABS) simulation results.
+A self-contained, zero-dependency browser tool for real-time visualization of wheel slide protection (ABS/WSP) simulation results.
 
 ---
 
 ## 概要 / Overview
 
-本ツールは **山崎モデル** をベースに、ABS（アンチロックブレーキ) /WSP(車輪滑走防止装置）のシミュレーション結果をアニメーション表示するインタラクティブビジュアライザです。
-外部CSVファイルから時系列データを読み込み、接触楕円内の粘着/すべり域分布・接線力分布をリアルタイムに描画します。横すべり $s_y$ をスライダーで独立に制御することで、
-制動中の前後力とコーナリング力の分布を直感的に把握できます。
+本ツールは **山崎モデル** をベースに、ABS（アンチロックブレーキ）/ WSP（車輪滑走防止装置）のシミュレーション結果をアニメーション表示するインタラクティブビジュアライザです。外部CSVファイルから時系列データを読み込み、接触楕円内の粘着/すべり域分布・接線力分布をリアルタイムに描画します。横すべり $s_y$ をスライダーで独立に制御することで、制動中の前後力とコーナリング力の分布を直感的に把握できます。
 
-This tool provides an interactive animation of wheel slide protection (ABS) simulation results based on the Yamazaki tire friction model. It loads time-series data from an external CSV file and renders adhesion/slip zone maps and tangential force distributions in real time. The lateral slip $s_y$ can be independently controlled via a slider, enabling intuitive understanding of cornering force effects during braking.
+This tool provides an interactive animation of wheel slide protection (ABS/WSP) simulation results based on the Yamazaki tire friction model. It loads time-series data from an external CSV file and renders adhesion/slip zone maps and tangential force distributions in real time. The lateral slip $s_y$ can be independently controlled via a slider, enabling intuitive understanding of cornering force effects during braking.
 
 ---
 
@@ -66,8 +64,8 @@ time, V, slip, BC
 | **BC** | ブレーキシリンダ圧力 | kPa |
 
 > [!NOTE]
-> 車輪速度 $V_w$ はCSVに含まれなくても、$V_w = V \times (1 - s_x)$ から自動計算されます。
-> Wheel speed $V_w$ is automatically computed as $V_w = V \times (1 - s_x)$ if not included in the CSV.
+> 車輪速度 $V_w$ はCSVに含まれなくても、$V_w = V \times (1 - s_x)$ から自動計算されます。5列形式（time, V, Vw, slip, BC）にも対応しています。
+> Wheel speed $V_w$ is automatically computed as $V_w = V \times (1 - s_x)$ if not included. 5-column format (time, V, Vw, slip, BC) is also supported.
 
 CSVを読み込むとデフォルトのサンプルデータが差し替わり、アニメーションがリセットされます。
 
@@ -95,7 +93,7 @@ CSVを読み込むとデフォルトのサンプルデータが差し替わり�
 │  粘着/すべり域   │  接線力|f|分布  │  圧力分布p(x,y)│
 │  Adhesion/Slip   │  Tangential |f| │  Hertz p(x,y)  │
 ├──────────────────┴────────────────┴────────────────┤
-│          ABS 時系列応答 (V, Vw, BC)                │
+│          ABS/WSP 時系列応答 (V, Vw, BC)            │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -103,15 +101,37 @@ CSVを読み込むとデフォルトのサンプルデータが差し替わり�
 * **粘着/すべり域** — 青 = 粘着域、赤 = すべり域。制動力の飽和状況をリアルタイムに把握
 * **接線力 $|f|$ 分布** — $\sqrt{f_x^2 + f_y^2}$ のヒートマップ表示
 * **圧力分布 $p(x,y)$** — Hertz 楕円接触に基づく法線力分布
-* **ABS 時系列応答** — $V$（車両速度）、$V_w$（車輪速度）、BC圧の時刻歴を同時表示
+* **ABS/WSP 時系列応答** — $V$（車両速度）、$V_w$（車輪速度）、BC圧の時刻歴を同時表示
+
+---
+
+## 固定パラメータ / Fixed Parameters
+
+本ツールでは以下のパラメータが固定値として設定されています。
+
+| 記号 | 値 | 説明 / Description |
+|---|---|---|
+| **$a$** | $50\text{ mm}$ | 接触楕円 半長軸（進行方向） / Semi-major axis (longitudinal) |
+| **$b$** | $74\text{ mm}$ | 接触楕円 半短軸（横方向） / Semi-minor axis (lateral) |
+| **$F_z$** | $\approx 4448\text{ N}$ | 垂直荷重（$1815\text{ kg}$ 車両の1輪分） / Normal load |
+| **$G$** | $10\text{ MPa}$ | タイヤゴムの横せん断弾性係数 / Shear modulus |
+| **$v_0$** | $80\text{ km/h}$ | 基準車速 / Reference vehicle speed |
+| **$\mu_s$** | $0.30$ | 静摩擦係数 / Static friction coefficient |
+| **$\alpha$** | $0.20$ | 速度無限大での動摩擦比 / Dynamic friction ratio at infinite speed |
+| **$\beta$** | $0.05$ | 動摩擦の速度依存減衰率 / Velocity-dependent decay rate |
+| **$N, M$** | $60 \times 60$ | 計算メッシュ数 / Mesh resolution |
 
 ---
 
 ## モデルの理論 / Model Theory
 
-接触力の計算には **山崎モデル**（Brush Model + Hertz 楕円接触 + 速度依存動摩擦）を使用しています。詳細な理論については [`README.md`](./README.md) を参照してください。
+接触力の計算には **山崎モデル**（Brush Model + Hertz 楕円接触 + 速度依存動摩擦）を使用しています。
+詳細な理論については
+https://github.com/hiroo718/yamazaki-model
+の [`README.md`](./README.md) を参照してください。
 
-For the theoretical background of the contact force model (Brush Model, Hertz contact, velocity-dependent friction), please refer to [`README.md`](./README.md).
+For the theoretical background of the contact force model (Brush Model, Hertz contact, velocity-dependent friction),
+please refer to [`README.md`](./README.md) in https://github.com/hiroo718/yamazaki-model.
 
 ---
 
@@ -120,6 +140,8 @@ For the theoretical background of the contact force model (Brush Model, Hertz co
 本ツールを研究、論文、または学会発表等に使用する場合は、`CITATION.cff` を参照して引用してください。
 
 *If you use this tool in your research, please cite it using the metadata in `CITATION.cff`.*
+
+---
 
 ## Contact
 
