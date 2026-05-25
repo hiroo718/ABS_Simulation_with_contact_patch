@@ -134,6 +134,9 @@ For the theoretical background of the contact force model (Brush Model, Hertz co
 please refer to [`README.md`](./README.md) in https://github.com/hiroo718/yamazaki-model.
 
 ---
+## AI Assistance
+The visualization was developed with the assistance of AIs.
+---
 
 ## 引用 / Citation
 
